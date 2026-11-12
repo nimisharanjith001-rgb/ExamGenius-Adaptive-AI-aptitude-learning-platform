@@ -1,0 +1,4 @@
+Date;Time;Global_active_power;Global_reactive_power;Voltage;Global_intensity;Sub_metering_1;Sub_metering_2;Sub_metering_3
+01/01/2026;00:00:00;0.320;0.045;234.2;1.4;0;0;0
+01/01/2026;00:01:00;0.318;0.044;234.1;1.4;0;0;0
+01/01/2026;00:02:00;0.322;0.045;234.0;1.4;0;0;0
