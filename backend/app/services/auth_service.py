@@ -11,7 +11,9 @@ import re
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/auth/login")
 
-EMAIL_REGEX = r"^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$"
+# Strict Email Verification Regex (Standard format + valid top-level domain)
+STRICT_EMAIL_REGEX = r"^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z]{2,}$"
+SPECIAL_CHARS_REGEX = r"[!@#$%^&*()_+\-=\[\]{}|;:,.<>?/~`]"
 
 class AuthService:
     @staticmethod
@@ -20,11 +22,11 @@ class AuthService:
         name_clean = user_data.full_name.strip()
         pwd = user_data.password
 
-        # Security validations
-        if not re.match(EMAIL_REGEX, email_clean):
+        # 1. Strict Email Verification Validation
+        if not re.match(STRICT_EMAIL_REGEX, email_clean):
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Please enter a valid email address."
+                detail="Please enter a verified valid email address with a valid domain (e.g. name@domain.com)."
             )
 
         if len(name_clean) < 2:
@@ -33,10 +35,29 @@ class AuthService:
                 detail="Full name must be at least 2 characters long."
             )
 
-        if len(pwd) < 6:
+        # 2. Strict Password Strength Validation (Numbers + Special Characters + 8+ chars)
+        if len(pwd) < 8:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Password must be at least 6 characters long."
+                detail="Password must be at least 8 characters long."
+            )
+
+        if not re.search(r"\d", pwd):
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Password must contain at least one numeric digit (0-9)."
+            )
+
+        if not re.search(SPECIAL_CHARS_REGEX, pwd):
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Password must contain at least one special character (e.g. ! @ # $ % ^ & *)."
+            )
+
+        if not re.search(r"[a-zA-Z]", pwd):
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Password must contain alphabetic characters."
             )
 
         existing_user = db.query(User).filter(User.email == email_clean).first()
