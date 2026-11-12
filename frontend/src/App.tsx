@@ -3,6 +3,7 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { DatasetProvider } from './contexts/DatasetContext';
 import { AppLayout } from './components/layout/AppLayout';
+import { LandingPage } from './pages/LandingPage';
 import { Login } from './pages/Login';
 import { Register } from './pages/Register';
 import { Dashboard } from './pages/Dashboard';
@@ -39,33 +40,32 @@ export const App: React.FC = () => {
       <AuthProvider>
         <DatasetProvider>
           <Routes>
-            {/* Public Routes */}
+            {/* Public Landing & Auth Routes */}
+            <Route path="/" element={<LandingPage />} />
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
 
-            {/* Protected Application Routes */}
+            {/* Protected Core Dashboard & Analytics Routes */}
             <Route
-              path="/"
               element={
                 <ProtectedRoute>
                   <AppLayout />
                 </ProtectedRoute>
               }
             >
-              <Route index element={<Navigate to="/dashboard" replace />} />
-              <Route path="dashboard" element={<Dashboard />} />
-              <Route path="analytics" element={<ConsumptionAnalytics />} />
-              <Route path="forecasting" element={<Forecasting />} />
-              <Route path="anomalies" element={<AnomalyDetection />} />
-              <Route path="patterns" element={<UsagePatterns />} />
-              <Route path="bill" element={<ElectricityBill />} />
-              <Route path="recommendations" element={<Recommendations />} />
-              <Route path="datasets" element={<DatasetManagement />} />
-              <Route path="settings" element={<Settings />} />
+              <Route path="/dashboard" element={<Dashboard />} />
+              <Route path="/analytics" element={<ConsumptionAnalytics />} />
+              <Route path="/forecasting" element={<Forecasting />} />
+              <Route path="/anomalies" element={<AnomalyDetection />} />
+              <Route path="/patterns" element={<UsagePatterns />} />
+              <Route path="/bill" element={<ElectricityBill />} />
+              <Route path="/recommendations" element={<Recommendations />} />
+              <Route path="/datasets" element={<DatasetManagement />} />
+              <Route path="/settings" element={<Settings />} />
             </Route>
 
-            {/* Fallback */}
-            <Route path="*" element={<Navigate to="/dashboard" replace />} />
+            {/* Fallback to Landing Page */}
+            <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </DatasetProvider>
       </AuthProvider>
@@ -74,4 +74,3 @@ export const App: React.FC = () => {
 };
 
 export default App;
-
