@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Zap, Lock, Mail, ArrowRight, AlertCircle, Eye, EyeOff } from 'lucide-react';
+import { Zap, Lock, Mail, ArrowRight, AlertCircle, Eye, EyeOff, ShieldCheck } from 'lucide-react';
 import api from '../api/client';
 import { useAuth } from '../contexts/AuthContext';
+import { EmailVerificationModal } from '../components/auth/EmailVerificationModal';
 
 export const Login: React.FC = () => {
   const navigate = useNavigate();
@@ -13,6 +14,16 @@ export const Login: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
+  // Email verification modal state
+  const [verificationModal, setVerificationModal] = useState<{
+    isOpen: boolean;
+    email: string;
+    code?: string;
+  }>({
+    isOpen: false,
+    email: '',
+  });
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
@@ -21,13 +32,24 @@ export const Login: React.FC = () => {
     try {
       const res = await api.post('/auth/login', {
         email: email.trim().toLowerCase(),
-        password: password
+        password: password,
       });
+
+      // If account requires OTP email verification
+      if (res.data.requires_verification) {
+        setVerificationModal({
+          isOpen: true,
+          email: email.trim().toLowerCase(),
+          code: res.data.verification_code,
+        });
+        return;
+      }
+
       login(res.data.access_token, res.data.user);
       navigate('/dashboard');
     } catch (err: any) {
       console.error('Login error:', err);
-      setError(err.response?.data?.detail || err.message || 'Authentication request failed. Please check backend connection.');
+      setError(err.response?.data?.detail || err.message || 'Authentication request failed. Please check credentials.');
     } finally {
       setLoading(false);
     }
@@ -39,7 +61,7 @@ export const Login: React.FC = () => {
     try {
       const res = await api.post('/auth/login', {
         email: 'demo@powerpulse.ai',
-        password: 'DemoPassword123!'
+        password: 'DemoPassword123!',
       });
       login(res.data.access_token, res.data.user);
       navigate('/dashboard');
@@ -51,14 +73,29 @@ export const Login: React.FC = () => {
     }
   };
 
+  const handleVerified = (token: string, user: any) => {
+    login(token, user);
+    navigate('/dashboard');
+  };
+
   return (
     <div className="min-h-screen bg-[#F5F7FB] flex flex-col justify-center py-12 sm:px-6 lg:px-8">
+      {/* 6-Digit Email Verification Modal if unverified account */}
+      {verificationModal.isOpen && (
+        <EmailVerificationModal
+          email={verificationModal.email}
+          initialCode={verificationModal.code}
+          onVerified={handleVerified}
+          onCancel={() => setVerificationModal({ isOpen: false, email: '' })}
+        />
+      )}
+
       <div className="sm:mx-auto sm:w-full sm:max-w-md text-center">
         <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-blue-600 to-emerald-500 flex items-center justify-center mx-auto shadow-lg shadow-blue-500/25">
           <Zap className="w-6 h-6 text-white fill-white" />
         </div>
         <h2 className="mt-4 text-2xl font-bold tracking-tight text-slate-900">
-          PowerPulse <span className="text-blue-600">AI</span>
+          Sign In to PowerPulse AI
         </h2>
         <p className="mt-1 text-sm text-slate-500">
           Smart Electricity Consumption & Anomaly Detector
@@ -67,10 +104,10 @@ export const Login: React.FC = () => {
 
       <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
         <div className="bg-white py-8 px-6 shadow-sm border border-slate-200 rounded-2xl sm:px-10">
-          <form className="space-y-5" onSubmit={handleSubmit}>
+          <form className="space-y-4" onSubmit={handleSubmit}>
             {error && (
-              <div className="p-3 bg-red-50 border border-red-200 rounded-xl text-xs text-red-600 flex items-center gap-2">
-                <AlertCircle className="w-4 h-4 shrink-0" />
+              <div className="p-3 bg-red-50 border border-red-200 rounded-xl text-xs text-red-600 flex items-start gap-2">
+                <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
                 <span>{error}</span>
               </div>
             )}
@@ -86,7 +123,7 @@ export const Login: React.FC = () => {
                   required
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  placeholder="student@university.edu"
+                  placeholder="name@gmail.com"
                   className="block w-full pl-9 pr-3 py-2 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-blue-500 outline-none"
                 />
               </div>
@@ -103,7 +140,7 @@ export const Login: React.FC = () => {
                   required
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  placeholder="••••••••"
+                  placeholder="••••••••••••"
                   className="block w-full pl-9 pr-10 py-2 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-blue-500 outline-none"
                 />
                 <button
@@ -126,19 +163,20 @@ export const Login: React.FC = () => {
             </button>
           </form>
 
-          {/* Quick Demo Login button */}
+          {/* Quick Demo Access Button */}
           <div className="mt-4 pt-4 border-t border-slate-100">
             <button
               type="button"
               onClick={fillQuickDemo}
               disabled={loading}
-              className="w-full py-2 px-4 rounded-xl text-xs font-semibold text-emerald-700 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 transition-colors"
+              className="w-full py-2.5 px-4 rounded-xl text-xs font-semibold text-emerald-700 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 transition-colors flex items-center justify-center gap-2"
             >
-              ⚡ Instant 1-Click Examiner / Demo Access
+              <Zap className="w-3.5 h-3.5 text-emerald-600" />
+              <span>Instant 1-Click Examiner / Demo Access</span>
             </button>
           </div>
 
-          <div className="mt-4 text-center">
+          <div className="mt-6 text-center">
             <p className="text-xs text-slate-500">
               Don't have an account?{' '}
               <Link to="/register" className="font-semibold text-blue-600 hover:text-blue-500">
@@ -151,4 +189,3 @@ export const Login: React.FC = () => {
     </div>
   );
 };
-

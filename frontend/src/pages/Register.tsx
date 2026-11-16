@@ -3,6 +3,14 @@ import { Link, useNavigate } from 'react-router-dom';
 import { Zap, Lock, Mail, User as UserIcon, ArrowRight, AlertCircle, Eye, EyeOff, CheckCircle2, ShieldCheck, XCircle } from 'lucide-react';
 import api from '../api/client';
 import { useAuth } from '../contexts/AuthContext';
+import { EmailVerificationModal } from '../components/auth/EmailVerificationModal';
+
+// Blocklist of non-existent or fake domains
+const FAKE_OR_DISPOSABLE_DOMAINS = [
+  'fake.com', 'test.com', 'example.com', 'sample.com', 'invalid.com', 'asdf.com',
+  'dummy.com', 'tempmail.com', 'mailinator.com', '10minutemail.com', 'guerrillamail.com',
+  'trashmail.com', 'dispostable.com', 'yopmail.com'
+];
 
 export const Register: React.FC = () => {
   const navigate = useNavigate();
@@ -14,8 +22,24 @@ export const Register: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
-  // Email format verification (must be valid domain format name@domain.tld)
-  const isEmailValid = /^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z]{2,}$/.test(email.trim());
+  // Email verification modal state
+  const [verificationModal, setVerificationModal] = useState<{
+    isOpen: boolean;
+    email: string;
+    code?: string;
+  }>({
+    isOpen: false,
+    email: '',
+  });
+
+  // Real-world domain check
+  const emailTrimmed = email.trim().toLowerCase();
+  const emailRegex = /^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$/;
+  const emailDomain = emailTrimmed.includes('@') ? emailTrimmed.split('@')[1] : '';
+  const isDomainFake = FAKE_OR_DISPOSABLE_DOMAINS.includes(emailDomain);
+  const hasValidTld = emailDomain.includes('.') && emailDomain.split('.').pop()!.length >= 2;
+
+  const isEmailValid = emailRegex.test(emailTrimmed) && !isDomainFake && hasValidTld;
 
   // Password requirements checks
   const hasMinLength = password.length >= 8;
@@ -33,7 +57,11 @@ export const Register: React.FC = () => {
     setError(null);
 
     if (!isEmailValid) {
-      setError('Please provide a valid verified email address format (e.g., student@university.edu).');
+      if (isDomainFake) {
+        setError(`The domain '${emailDomain}' is disposable or fake. Please use a real active email provider (e.g. Gmail, Outlook, Yahoo, University, or Work email).`);
+      } else {
+        setError('Please enter a real, active email address with a valid domain (e.g. name@gmail.com).');
+      }
       return;
     }
 
@@ -46,14 +74,17 @@ export const Register: React.FC = () => {
 
     try {
       const res = await api.post('/auth/register', {
-        email: email.trim().toLowerCase(),
+        email: emailTrimmed,
         full_name: fullName.trim(),
         password,
       });
 
-      // Instantly authenticated with returned token
-      login(res.data.access_token, res.data.user);
-      navigate('/dashboard');
+      // Show security 6-digit OTP verification modal
+      setVerificationModal({
+        isOpen: true,
+        email: emailTrimmed,
+        code: res.data.verification_code,
+      });
     } catch (err: any) {
       console.error('Registration error:', err);
       setError(err.response?.data?.detail || err.message || 'Registration failed. Email may already be registered.');
@@ -62,8 +93,23 @@ export const Register: React.FC = () => {
     }
   };
 
+  const handleVerified = (token: string, user: any) => {
+    login(token, user);
+    navigate('/dashboard');
+  };
+
   return (
     <div className="min-h-screen bg-[#F5F7FB] flex flex-col justify-center py-12 sm:px-6 lg:px-8">
+      {/* 6-Digit Email Verification Modal */}
+      {verificationModal.isOpen && (
+        <EmailVerificationModal
+          email={verificationModal.email}
+          initialCode={verificationModal.code}
+          onVerified={handleVerified}
+          onCancel={() => setVerificationModal({ isOpen: false, email: '' })}
+        />
+      )}
+
       <div className="sm:mx-auto sm:w-full sm:max-w-md text-center">
         <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-blue-600 to-emerald-500 flex items-center justify-center mx-auto shadow-lg shadow-blue-500/25">
           <Zap className="w-6 h-6 text-white fill-white" />
@@ -104,7 +150,7 @@ export const Register: React.FC = () => {
               </div>
             </div>
 
-            {/* Email Address with Live Verification Indicator */}
+            {/* Email Address with Real Domain Verification Indicator */}
             <div>
               <div className="flex justify-between items-center">
                 <label className="block text-xs font-semibold text-slate-700">Email Address</label>
@@ -113,10 +159,15 @@ export const Register: React.FC = () => {
                     {isEmailValid ? (
                       <>
                         <CheckCircle2 className="w-3 h-3 text-emerald-500" />
-                        Verified Email Format
+                        Valid Real Email
+                      </>
+                    ) : isDomainFake ? (
+                      <>
+                        <XCircle className="w-3 h-3 text-rose-500" />
+                        Fake / Disposable Domain
                       </>
                     ) : (
-                      'Enter valid domain (@...)'
+                      'Enter valid email (@...)'
                     )}
                   </span>
                 )}
@@ -130,7 +181,7 @@ export const Register: React.FC = () => {
                   required
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  placeholder="student@university.edu"
+                  placeholder="name@gmail.com or university email"
                   className={`block w-full pl-9 pr-3 py-2 border rounded-xl text-sm outline-none transition-colors ${
                     email.length > 3
                       ? isEmailValid
@@ -209,7 +260,7 @@ export const Register: React.FC = () => {
               className="w-full flex items-center justify-center gap-2 py-2.5 px-4 border border-transparent rounded-xl text-sm font-semibold text-white bg-blue-600 hover:bg-blue-700 shadow-md shadow-blue-500/20 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all disabled:opacity-50 disabled:cursor-not-allowed mt-2"
             >
               <ShieldCheck className="w-4 h-4" />
-              <span>{loading ? 'Creating Verified Account...' : 'Register Secure Account'}</span>
+              <span>{loading ? 'Creating Account...' : 'Sign Up with Security Code'}</span>
               <ArrowRight className="w-4 h-4" />
             </button>
           </form>

@@ -6,11 +6,18 @@ from datetime import datetime
 class UserRegister(BaseModel):
     email: str
     full_name: str
-    password: str = Field(..., min_length=6)
+    password: str = Field(..., min_length=8)
 
 class UserLogin(BaseModel):
     email: str
     password: str
+
+class VerifyCodeRequest(BaseModel):
+    email: str
+    code: str
+
+class ResendCodeRequest(BaseModel):
+    email: str
 
 class UserResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
@@ -19,12 +26,17 @@ class UserResponse(BaseModel):
     email: str
     full_name: str
     is_active: bool
+    is_verified: bool = True
     created_at: datetime
 
 class Token(BaseModel):
     access_token: str
     token_type: str = "bearer"
     user: UserResponse
+    is_verified: bool = True
+    requires_verification: bool = False
+    verification_code: Optional[str] = None
+    message: Optional[str] = None
 
 # --- Dataset Schemas ---
 class DatasetValidationReport(BaseModel):
