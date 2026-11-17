@@ -64,10 +64,10 @@ class AuthService:
         if domain in DISPOSABLE_OR_FAKE_DOMAINS:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
-                detail=f"The email domain '{domain}' is not accepted. Please use a real active email provider (e.g. Gmail, Outlook, Yahoo, University, or Company email)."
+                detail=f"The email domain '{domain}' is disposable or fake. Please use a real active email provider (e.g. Gmail, Outlook, Yahoo, University, or Company email)."
             )
 
-        # 2. Extract Top-Level Domain (TLD)
+        # 2. Validate Domain Structure and TLD (accepts all worldwide domains)
         parts = domain.split(".")
         if len(parts) < 2 or len(parts[0]) < 2:
             raise HTTPException(
@@ -76,28 +76,11 @@ class AuthService:
             )
 
         tld = parts[-1]
-        second_tld = parts[-2] if len(parts) >= 3 else None
-
-        # 3. Check for genuine academic, government, or recognized institutional domains
-        is_academic_or_gov = any(domain.endswith(f".{ext}") for ext in [
-            "edu", "ac.in", "edu.in", "gov", "gov.in", "org.in", "res.in", "nic.in", "ac.uk"
-        ])
-
-        # 4. Check for known global providers
-        is_known_provider = domain in KNOWN_REAL_DOMAINS
-
-        # 5. Check valid TLD
-        is_valid_tld = tld in LEGITIMATE_TLDS or (second_tld and second_tld in ["co", "ac", "gov", "edu", "org", "net", "res"])
-
-        if not (is_known_provider or is_academic_or_gov or is_valid_tld):
-            # Attempt DNS lookup if network allows
-            try:
-                socket.gethostbyname(domain)
-            except Exception:
-                raise HTTPException(
-                    status_code=status.HTTP_400_BAD_REQUEST,
-                    detail=f"The email domain '{domain}' does not exist. Please enter a valid, active email address."
-                )
+        if not re.match(r"^[a-zA-Z]{2,24}$", tld):
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=f"Invalid domain extension in '{domain}'. Please provide a valid email domain."
+            )
 
     @staticmethod
     def register_user(db: Session, user_data: UserRegister) -> dict:
@@ -276,13 +259,6 @@ class AuthService:
     def authenticate_user(db: Session, login_data: UserLogin) -> dict:
         email_clean = login_data.email.strip().lower()
         pwd = login_data.password
-
-        # Enforce strict password complexity (words/letters, numbers, special symbols, min 8 chars)
-        if len(pwd) < 8 or not re.search(r"[a-zA-Z]", pwd) or not re.search(r"\d", pwd) or not re.search(SPECIAL_CHARS_REGEX, pwd):
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Weak password rejected: Password must contain at least 8 characters, including words (letters), numbers, and special symbols (!@#$%^&*)."
-            )
 
         user = db.query(User).filter(User.email == email_clean).first()
         if not user or not verify_password(pwd, user.hashed_password):

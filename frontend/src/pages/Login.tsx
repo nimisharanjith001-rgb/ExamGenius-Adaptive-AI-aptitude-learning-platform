@@ -48,21 +48,12 @@ export const Login: React.FC = () => {
   // Google / Email detection
   const isGoogleAccount = email.trim().toLowerCase().endsWith('@gmail.com') || email.trim().toLowerCase().endsWith('@googlemail.com');
 
-  // Strict Password Strength Requirements: Words (letters), Numbers, Symbols, 8+ characters
-  const hasMinLength = password.length >= 8;
-  const hasLetter = /[a-zA-Z]/.test(password);
-  const hasNumber = /\d/.test(password);
-  const hasSpecialChar = /[!@#$%^&*()_+\-=\[\]{}|;:,.<>?/~`]/.test(password);
-  const isPasswordStrong = hasMinLength && hasLetter && hasNumber && hasSpecialChar;
-  const strengthScore = [hasMinLength, hasLetter, hasNumber, hasSpecialChar].filter(Boolean).length;
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
 
-    // Reject weak passwords immediately
-    if (!isPasswordStrong) {
-      setError('Weak password rejected: Password must contain at least 8 characters, including words (letters), numbers, and special symbols (!@#$%^&*).');
+    if (!email.trim() || !password) {
+      setError('Please enter both your email address and password.');
       return;
     }
 
@@ -213,21 +204,6 @@ export const Login: React.FC = () => {
             <div>
               <div className="flex justify-between items-center mb-1">
                 <label className="block text-xs font-semibold text-slate-700">Password</label>
-                {password.length > 0 && (
-                  <span className={`text-[11px] font-semibold flex items-center gap-1 ${isPasswordStrong ? 'text-emerald-600' : 'text-rose-500'}`}>
-                    {isPasswordStrong ? (
-                      <>
-                        <CheckCircle2 className="w-3 h-3 text-emerald-500" />
-                        Strong Password
-                      </>
-                    ) : (
-                      <>
-                        <XCircle className="w-3 h-3 text-rose-500" />
-                        Weak Password
-                      </>
-                    )}
-                  </span>
-                )}
               </div>
               <div className="relative">
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">
@@ -238,14 +214,8 @@ export const Login: React.FC = () => {
                   required
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  placeholder="Must include words, numbers & symbols"
-                  className={`block w-full pl-9 pr-10 py-2 border rounded-xl text-sm outline-none transition-colors ${
-                    password.length > 0
-                      ? isPasswordStrong
-                        ? 'border-emerald-300 focus:ring-2 focus:ring-emerald-500'
-                        : 'border-rose-300 focus:ring-2 focus:ring-rose-500'
-                      : 'border-slate-200 focus:ring-2 focus:ring-blue-500'
-                  }`}
+                  placeholder="Enter your account password"
+                  className="block w-full pl-9 pr-10 py-2 border border-slate-200 rounded-xl text-sm outline-none focus:ring-2 focus:ring-blue-500 transition-colors"
                 />
                 <button
                   type="button"
@@ -255,51 +225,11 @@ export const Login: React.FC = () => {
                   {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                 </button>
               </div>
-
-              {/* Password Requirements Checklist & Strength Bar */}
-              {password.length > 0 && (
-                <div className="mt-2 space-y-2">
-                  <div className="w-full bg-slate-100 h-1.5 rounded-full overflow-hidden flex gap-1">
-                    <div className={`h-full flex-1 rounded-full transition-colors ${strengthScore >= 1 ? (strengthScore === 4 ? 'bg-emerald-500' : strengthScore >= 2 ? 'bg-amber-400' : 'bg-rose-400') : 'bg-slate-200'}`} />
-                    <div className={`h-full flex-1 rounded-full transition-colors ${strengthScore >= 2 ? (strengthScore === 4 ? 'bg-emerald-500' : 'bg-amber-400') : 'bg-slate-200'}`} />
-                    <div className={`h-full flex-1 rounded-full transition-colors ${strengthScore >= 3 ? (strengthScore === 4 ? 'bg-emerald-500' : 'bg-amber-400') : 'bg-slate-200'}`} />
-                    <div className={`h-full flex-1 rounded-full transition-colors ${strengthScore === 4 ? 'bg-emerald-500' : 'bg-slate-200'}`} />
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-1 text-[11px] pt-0.5">
-                    <div className={`flex items-center gap-1 ${hasMinLength ? 'text-emerald-600 font-medium' : 'text-rose-500'}`}>
-                      {hasMinLength ? <CheckCircle2 className="w-3 h-3 text-emerald-500" /> : <XCircle className="w-3 h-3 text-rose-400" />}
-                      <span>8+ Characters</span>
-                    </div>
-
-                    <div className={`flex items-center gap-1 ${hasLetter ? 'text-emerald-600 font-medium' : 'text-rose-500'}`}>
-                      {hasLetter ? <CheckCircle2 className="w-3 h-3 text-emerald-500" /> : <XCircle className="w-3 h-3 text-rose-400" />}
-                      <span>Words / Letters (a-z)</span>
-                    </div>
-
-                    <div className={`flex items-center gap-1 ${hasNumber ? 'text-emerald-600 font-medium' : 'text-rose-500'}`}>
-                      {hasNumber ? <CheckCircle2 className="w-3 h-3 text-emerald-500" /> : <XCircle className="w-3 h-3 text-rose-400" />}
-                      <span>Numbers (0-9)</span>
-                    </div>
-
-                    <div className={`flex items-center gap-1 ${hasSpecialChar ? 'text-emerald-600 font-medium' : 'text-rose-500'}`}>
-                      {hasSpecialChar ? <CheckCircle2 className="w-3 h-3 text-emerald-500" /> : <XCircle className="w-3 h-3 text-rose-400" />}
-                      <span>Symbols (!@#$%)</span>
-                    </div>
-                  </div>
-
-                  {!isPasswordStrong && (
-                    <p className="text-[11px] text-rose-500 font-medium mt-1">
-                      ⚠️ Weak password not allowed. Password must use words, numbers, and symbols.
-                    </p>
-                  )}
-                </div>
-              )}
             </div>
 
             <button
               type="submit"
-              disabled={loading || !isPasswordStrong}
+              disabled={loading || !email.trim() || !password}
               className="w-full flex items-center justify-center gap-2 py-2.5 px-4 border border-transparent rounded-xl text-sm font-semibold text-white bg-blue-600 hover:bg-blue-700 shadow-md shadow-blue-500/20 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <span>{loading ? 'Authenticating...' : 'Sign In'}</span>
