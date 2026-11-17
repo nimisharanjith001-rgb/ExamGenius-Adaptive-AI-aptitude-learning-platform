@@ -372,6 +372,16 @@ export const handleMockFallback = (url: string, method: string = 'GET', data?: a
 
     // 6f. Single Dataset by ID
     const singleMatch = cleanUrl.match(/^\/datasets\/(\d+)$/);
+    if (singleMatch && lowerMethod === 'delete') {
+      const id = parseInt(singleMatch[1]);
+      storedDatasets = storedDatasets.filter(d => d.id !== id);
+      if (storedDatasets.length > 0 && !storedDatasets.some(d => d.is_active)) {
+        storedDatasets[0].is_active = true;
+      }
+      try { localStorage.setItem('powerpulse_mock_datasets', JSON.stringify(storedDatasets)); } catch {}
+      return { status: 200, data: { message: 'Dataset deleted successfully' } };
+    }
+
     if (singleMatch) {
       const id = parseInt(singleMatch[1]);
       const found = storedDatasets.find(d => d.id === id) || storedDatasets[0];

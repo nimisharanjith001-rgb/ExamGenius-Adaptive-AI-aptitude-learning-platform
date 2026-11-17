@@ -33,7 +33,30 @@ api.interceptors.request.use((config) => {
 
 // Response interceptor with intelligent fallback for static/Vercel/offline deployments
 api.interceptors.response.use(
-  (response) => response,
+  (response) => {
+    // If hosting platform (e.g. Vercel) rewrote an /api request to /index.html with status 200 OK
+    const isHtmlResponse =
+      typeof response.data === 'string' &&
+      (response.data.includes('<!DOCTYPE html>') ||
+       response.data.includes('<!doctype html>') ||
+       response.data.includes('<html') ||
+       (response.headers && String(response.headers['content-type'] || '').includes('text/html')));
+
+    if (isHtmlResponse) {
+      const config = response.config;
+      if (config && config.url) {
+        try {
+          const reqData = typeof config.data === 'string' ? JSON.parse(config.data) : config.data;
+          const fallbackRes = handleMockFallback(config.url, config.method || 'GET', reqData);
+          return fallbackRes as any;
+        } catch {
+          const fallbackRes = handleMockFallback(config.url, config.method || 'GET', config.data);
+          return fallbackRes as any;
+        }
+      }
+    }
+    return response;
+  },
   async (error) => {
     // If the server answered with an intentional validation/auth error, pass it directly
     if (error.response && [400, 401, 403].includes(error.response.status) && error.response.data?.detail) {
@@ -46,15 +69,20 @@ api.interceptors.response.use(
     }
 
     // If backend is unreachable or host has no API route (e.g., Vercel static deployment)
-    if (!error.response || [404, 405, 502, 503, 504].includes(error.response.status)) {
+    if (!error.response || [404, 405, 500, 502, 503, 504].includes(error.response.status)) {
       const config = error.config;
       if (config && config.url) {
         try {
           const reqData = typeof config.data === 'string' ? JSON.parse(config.data) : config.data;
           const fallbackRes = handleMockFallback(config.url, config.method || 'GET', reqData);
           return fallbackRes;
-        } catch (fallbackErr) {
-          return Promise.reject(fallbackErr);
+        } catch {
+          try {
+            const fallbackRes = handleMockFallback(config.url, config.method || 'GET', config.data);
+            return fallbackRes;
+          } catch (err) {
+            return Promise.reject(err);
+          }
         }
       }
     }
