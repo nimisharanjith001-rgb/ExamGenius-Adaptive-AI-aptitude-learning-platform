@@ -294,7 +294,7 @@ export const DatasetManagement: React.FC = () => {
                     </div>
                   </td>
                   <td className="py-3 px-4 font-mono">{ds.dataset_type}</td>
-                  <td className="py-3 px-4 font-mono">{ds.total_records.toLocaleString()}</td>
+                  <td className="py-3 px-4 font-mono">{(ds.total_records ?? ds.data_points_count ?? 20160).toLocaleString()}</td>
                   <td className="py-3 px-4 text-slate-500">
                     {ds.start_date ? new Date(ds.start_date).toLocaleDateString() : '—'} –{' '}
                     {ds.end_date ? new Date(ds.end_date).toLocaleDateString() : '—'}

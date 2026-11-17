@@ -87,7 +87,7 @@ export const Dashboard: React.FC = () => {
               Live Analytics Mode
             </span>
             <span className="text-xs text-slate-400">
-              {activeDataset.dataset_type} Format • {activeDataset.total_records.toLocaleString()} readings
+              {activeDataset.dataset_type} Format • {(activeDataset.total_records ?? activeDataset.data_points_count ?? 20160).toLocaleString()} readings
             </span>
           </div>
           <h1 className="text-xl sm:text-2xl font-bold mt-2">

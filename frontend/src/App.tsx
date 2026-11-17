@@ -15,6 +15,7 @@ import { ElectricityBill } from './pages/ElectricityBill';
 import { Recommendations } from './pages/Recommendations';
 import { DatasetManagement } from './pages/DatasetManagement';
 import { Settings } from './pages/Settings';
+import { ErrorBoundary } from './components/common/ErrorBoundary';
 
 const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { isAuthenticated, isLoading } = useAuth();
@@ -36,40 +37,42 @@ const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) =
 
 export const App: React.FC = () => {
   return (
-    <BrowserRouter>
-      <AuthProvider>
-        <DatasetProvider>
-          <Routes>
-            {/* Public Landing & Auth Routes */}
-            <Route path="/" element={<LandingPage />} />
-            <Route path="/login" element={<Login />} />
-            <Route path="/register" element={<Register />} />
+    <ErrorBoundary>
+      <BrowserRouter>
+        <AuthProvider>
+          <DatasetProvider>
+            <Routes>
+              {/* Public Landing & Auth Routes */}
+              <Route path="/" element={<LandingPage />} />
+              <Route path="/login" element={<Login />} />
+              <Route path="/register" element={<Register />} />
 
-            {/* Protected Core Dashboard & Analytics Routes */}
-            <Route
-              element={
-                <ProtectedRoute>
-                  <AppLayout />
-                </ProtectedRoute>
-              }
-            >
-              <Route path="/dashboard" element={<Dashboard />} />
-              <Route path="/analytics" element={<ConsumptionAnalytics />} />
-              <Route path="/forecasting" element={<Forecasting />} />
-              <Route path="/anomalies" element={<AnomalyDetection />} />
-              <Route path="/patterns" element={<UsagePatterns />} />
-              <Route path="/bill" element={<ElectricityBill />} />
-              <Route path="/recommendations" element={<Recommendations />} />
-              <Route path="/datasets" element={<DatasetManagement />} />
-              <Route path="/settings" element={<Settings />} />
-            </Route>
+              {/* Protected Core Dashboard & Analytics Routes */}
+              <Route
+                element={
+                  <ProtectedRoute>
+                    <AppLayout />
+                  </ProtectedRoute>
+                }
+              >
+                <Route path="/dashboard" element={<Dashboard />} />
+                <Route path="/analytics" element={<ConsumptionAnalytics />} />
+                <Route path="/forecasting" element={<Forecasting />} />
+                <Route path="/anomalies" element={<AnomalyDetection />} />
+                <Route path="/patterns" element={<UsagePatterns />} />
+                <Route path="/bill" element={<ElectricityBill />} />
+                <Route path="/recommendations" element={<Recommendations />} />
+                <Route path="/datasets" element={<DatasetManagement />} />
+                <Route path="/settings" element={<Settings />} />
+              </Route>
 
-            {/* Fallback to Landing Page */}
-            <Route path="*" element={<Navigate to="/" replace />} />
-          </Routes>
-        </DatasetProvider>
-      </AuthProvider>
-    </BrowserRouter>
+              {/* Fallback to Landing Page */}
+              <Route path="*" element={<Navigate to="/" replace />} />
+            </Routes>
+          </DatasetProvider>
+        </AuthProvider>
+      </BrowserRouter>
+    </ErrorBoundary>
   );
 };
 

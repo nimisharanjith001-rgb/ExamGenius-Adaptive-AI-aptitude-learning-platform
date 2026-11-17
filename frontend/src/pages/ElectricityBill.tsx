@@ -206,7 +206,7 @@ export const ElectricityBill: React.FC = () => {
                 type="number"
                 step="1"
                 min="0"
-                placeholder={`Default: dataset total (${activeDataset.total_energy_kwh} kWh)`}
+                placeholder={`Default: dataset total (${activeDataset.total_energy_kwh ?? 370.38} kWh)`}
                 value={customKwh}
                 onChange={(e) => setCustomKwh(e.target.value)}
                 className="mt-1 block w-full px-3 py-2 text-xs border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none font-mono placeholder:text-slate-400"

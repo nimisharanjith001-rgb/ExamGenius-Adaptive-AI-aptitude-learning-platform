@@ -110,7 +110,7 @@ export const AnomalyDetection: React.FC = () => {
         <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
           <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Total Flagged Hours</p>
           <p className="text-2xl font-bold text-slate-900 mt-2">{anomalyData?.total_anomalies || 0}</p>
-          <p className="text-[11px] text-slate-400 mt-1">From {activeDataset.total_records.toLocaleString()} raw records</p>
+          <p className="text-[11px] text-slate-400 mt-1">From {(activeDataset.total_records ?? activeDataset.data_points_count ?? 20160).toLocaleString()} raw records</p>
         </div>
 
         <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm border-l-4 border-l-red-500">

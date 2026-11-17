@@ -21,6 +21,7 @@ export interface Dataset {
   max_power_kw: number;
   min_power_kw: number;
   data_quality_status: 'EXCELLENT' | 'GOOD' | 'WARNING' | 'INVALID';
+  data_points_count?: number;
   is_active: boolean;
   created_at: string;
 }

@@ -235,13 +235,24 @@ export const handleMockFallback = (url: string, method: string = 'GET', data?: a
       {
         id: 1,
         name: 'UCI Individual Household Power Consumption',
+        filename: 'sample_uci_household_sample.csv',
         dataset_type: 'Household Sub-Station',
+        total_records: 20160,
+        missing_records: 0,
+        duplicate_records: 0,
+        start_date: '2026-01-01T00:00:00Z',
+        end_date: '2026-01-14T23:00:00Z',
+        total_energy_kwh: 370.38,
+        avg_power_kw: 1.102,
+        max_power_kw: 7.6,
+        min_power_kw: 0.076,
+        data_quality_status: 'EXCELLENT',
         data_points_count: 20160,
         is_active: true,
         created_at: new Date().toISOString()
       }
     ];
-    if (cleanUrl.includes('/seed-demo')) {
+    if (cleanUrl.includes('/seed-demo') || cleanUrl.includes('/activate')) {
       return { status: 200, data: mockDatasets[0] };
     }
     return { status: 200, data: mockDatasets };

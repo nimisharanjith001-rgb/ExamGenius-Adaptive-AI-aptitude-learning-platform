@@ -28,7 +28,7 @@ export const DatasetProvider: React.FC<{ children: React.ReactNode }> = ({ child
     setIsLoading(true);
     try {
       const res = await api.get('/datasets');
-      const list: Dataset[] = res.data;
+      const list: Dataset[] = Array.isArray(res.data) ? res.data : [];
       setDatasets(list);
       const active = list.find((d) => d.is_active) || (list.length > 0 ? list[0] : null);
       setActiveDataset(active);
