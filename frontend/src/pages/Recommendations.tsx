@@ -60,7 +60,7 @@ export const Recommendations: React.FC = () => {
             <div>
               <p className="text-[10px] uppercase font-bold text-emerald-800 tracking-wider">Potential Monthly Savings</p>
               <p className="text-base font-extrabold text-emerald-950">
-                ~{data.potential_monthly_savings_kwh} kWh ({data.currency} {data.potential_monthly_savings_amount.toLocaleString()})
+                ~{data.potential_monthly_savings_kwh} kWh ({data.currency} {(data.potential_monthly_savings_amount ?? 0).toLocaleString()})
               </p>
             </div>
           </div>

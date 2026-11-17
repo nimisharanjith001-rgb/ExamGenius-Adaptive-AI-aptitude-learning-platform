@@ -231,31 +231,154 @@ export const handleMockFallback = (url: string, method: string = 'GET', data?: a
 
   // 6. DATASETS
   if (cleanUrl.startsWith('/datasets')) {
-    const mockDatasets = [
-      {
-        id: 1,
-        name: 'UCI Individual Household Power Consumption',
-        filename: 'sample_uci_household_sample.csv',
-        dataset_type: 'Household Sub-Station',
+    // 6a. CSV Validation Report
+    if (cleanUrl.includes('/validate')) {
+      return {
+        status: 200,
+        data: {
+          total_records: 20160,
+          valid_records: 20160,
+          missing_records: 0,
+          duplicate_records: 0,
+          start_date: '2026-01-01T00:00:00Z',
+          end_date: '2026-01-14T23:00:00Z',
+          total_energy_kwh: 370.38,
+          avg_power_kw: 1.102,
+          max_power_kw: 7.6,
+          min_power_kw: 0.076,
+          sampling_rate: '1-minute',
+          detected_format: 'CSV Ingestion Pipeline',
+          columns_detected: ['Date', 'Time', 'Global_active_power', 'Voltage', 'Sub_metering_1'],
+          data_quality_status: 'EXCELLENT',
+          preview_rows: [
+            { timestamp: '2026-01-01 00:00:00', energy_kwh: 0.28, avg_power_kw: 1.12, max_power_kw: 2.1, voltage: 240.2 },
+            { timestamp: '2026-01-01 01:00:00', energy_kwh: 0.24, avg_power_kw: 0.96, max_power_kw: 1.8, voltage: 239.8 },
+            { timestamp: '2026-01-01 02:00:00', energy_kwh: 0.21, avg_power_kw: 0.84, max_power_kw: 1.5, voltage: 241.0 }
+          ],
+          validation_messages: ['Dataset structure and chronological continuity validated successfully.'],
+          hourly_records_count: 336
+        }
+      };
+    }
+
+    // 6b. Preview rows for modal
+    if (cleanUrl.includes('/preview')) {
+      const previewRows = [];
+      const now = new Date();
+      for (let i = 0; i < 20; i++) {
+        const d = new Date(now.getTime() - (20 - i) * 3600 * 1000);
+        previewRows.push({
+          timestamp: d.toISOString(),
+          energy_kwh: +(0.85 + Math.sin(i) * 0.35).toFixed(2),
+          avg_power_kw: +(1.1 + Math.sin(i) * 0.4).toFixed(2),
+          max_power_kw: +(2.4 + Math.sin(i) * 0.6).toFixed(2),
+          voltage: 238 + Math.floor(Math.sin(i) * 4)
+        });
+      }
+      return { status: 200, data: previewRows };
+    }
+
+    // Retrieve or initialize stored datasets
+    let storedDatasets: any[] = [];
+    try {
+      const raw = localStorage.getItem('powerpulse_mock_datasets');
+      if (raw) storedDatasets = JSON.parse(raw);
+    } catch {}
+
+    if (!storedDatasets || storedDatasets.length === 0) {
+      storedDatasets = [
+        {
+          id: 1,
+          name: 'UCI Individual Household Power Consumption',
+          filename: 'sample_uci_household_sample.csv',
+          dataset_type: 'Household Sub-Station',
+          total_records: 20160,
+          missing_records: 0,
+          duplicate_records: 0,
+          start_date: '2026-01-01T00:00:00Z',
+          end_date: '2026-01-14T23:00:00Z',
+          total_energy_kwh: 370.38,
+          avg_power_kw: 1.102,
+          max_power_kw: 7.6,
+          min_power_kw: 0.076,
+          data_quality_status: 'EXCELLENT',
+          data_points_count: 20160,
+          is_active: true,
+          created_at: new Date().toISOString()
+        }
+      ];
+      try { localStorage.setItem('powerpulse_mock_datasets', JSON.stringify(storedDatasets)); } catch {}
+    }
+
+    // 6c. Upload Dataset
+    if (cleanUrl.includes('/upload')) {
+      const newId = Date.now();
+      const customName = data?.get ? data.get('custom_name') : data?.custom_name;
+      const uploadedFile = data?.get ? data.get('file') : data?.file;
+      const fileName = uploadedFile?.name || 'custom_household_reading.csv';
+      const dsName = customName || (typeof fileName === 'string' ? fileName.replace(/\.[^/.]+$/, '') : 'Custom Dataset');
+
+      storedDatasets.forEach(d => { d.is_active = false; });
+
+      const newDataset = {
+        id: newId,
+        name: dsName,
+        filename: fileName,
+        dataset_type: 'Custom Smart Meter CSV',
         total_records: 20160,
         missing_records: 0,
         duplicate_records: 0,
-        start_date: '2026-01-01T00:00:00Z',
-        end_date: '2026-01-14T23:00:00Z',
-        total_energy_kwh: 370.38,
-        avg_power_kw: 1.102,
-        max_power_kw: 7.6,
-        min_power_kw: 0.076,
+        start_date: new Date(Date.now() - 14 * 24 * 3600 * 1000).toISOString(),
+        end_date: new Date().toISOString(),
+        total_energy_kwh: 412.5,
+        avg_power_kw: 1.22,
+        max_power_kw: 8.4,
+        min_power_kw: 0.08,
         data_quality_status: 'EXCELLENT',
         data_points_count: 20160,
         is_active: true,
         created_at: new Date().toISOString()
-      }
-    ];
-    if (cleanUrl.includes('/seed-demo') || cleanUrl.includes('/activate')) {
-      return { status: 200, data: mockDatasets[0] };
+      };
+
+      storedDatasets.unshift(newDataset);
+      try { localStorage.setItem('powerpulse_mock_datasets', JSON.stringify(storedDatasets)); } catch {}
+
+      return { status: 201, data: newDataset };
     }
-    return { status: 200, data: mockDatasets };
+
+    // 6d. Activate Dataset
+    if (cleanUrl.includes('/activate')) {
+      const match = cleanUrl.match(/\/datasets\/(\d+)\/activate/);
+      const targetId = match ? parseInt(match[1]) : storedDatasets[0]?.id;
+      let activeDs = storedDatasets[0];
+      storedDatasets.forEach(d => {
+        if (d.id === targetId) {
+          d.is_active = true;
+          activeDs = d;
+        } else {
+          d.is_active = false;
+        }
+      });
+      try { localStorage.setItem('powerpulse_mock_datasets', JSON.stringify(storedDatasets)); } catch {}
+      return { status: 200, data: activeDs };
+    }
+
+    // 6e. Seed Demo
+    if (cleanUrl.includes('/seed-demo')) {
+      storedDatasets.forEach(d => { d.is_active = (d.id === 1); });
+      try { localStorage.setItem('powerpulse_mock_datasets', JSON.stringify(storedDatasets)); } catch {}
+      return { status: 200, data: storedDatasets.find(d => d.id === 1) || storedDatasets[0] };
+    }
+
+    // 6f. Single Dataset by ID
+    const singleMatch = cleanUrl.match(/^\/datasets\/(\d+)$/);
+    if (singleMatch) {
+      const id = parseInt(singleMatch[1]);
+      const found = storedDatasets.find(d => d.id === id) || storedDatasets[0];
+      return { status: 200, data: found };
+    }
+
+    return { status: 200, data: storedDatasets };
   }
 
   // 7. DASHBOARD SUMMARY

@@ -241,7 +241,7 @@ export const ElectricityBill: React.FC = () => {
               <p className="text-xs text-slate-400">Total Estimated Payable</p>
               <div className="flex items-baseline gap-1 mt-1">
                 <span className="text-3xl font-extrabold text-white tracking-tight">
-                  {billResult ? `${currency} ${billResult.total_estimated_bill.toLocaleString()}` : '—'}
+                  {billResult ? `${currency} ${(billResult.total_estimated_bill ?? 0).toLocaleString()}` : '—'}
                 </span>
               </div>
               <p className="text-[11px] text-slate-400 mt-1">

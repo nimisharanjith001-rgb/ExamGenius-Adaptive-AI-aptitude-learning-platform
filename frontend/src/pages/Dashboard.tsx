@@ -119,7 +119,7 @@ export const Dashboard: React.FC = () => {
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
         <KPICard
           title="Total Energy"
-          value={summary ? summary.total_energy_kwh.toLocaleString() : '0'}
+          value={summary ? (summary.total_energy_kwh ?? 0).toLocaleString() : '0'}
           unit="kWh"
           icon={Zap}
           changePct={summary?.consumption_change_pct}
@@ -137,7 +137,7 @@ export const Dashboard: React.FC = () => {
         />
         <KPICard
           title="Estimated Bill"
-          value={summary ? `${summary.currency} ${summary.estimated_monthly_bill.toLocaleString()}` : '₹ 0'}
+          value={summary ? `${summary.currency || '₹'} ${(summary.estimated_monthly_bill ?? 0).toLocaleString()}` : '₹ 0'}
           unit="monthly"
           icon={Receipt}
           subtitle="Based on slab tariff"
