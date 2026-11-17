@@ -108,12 +108,15 @@ export const Register: React.FC = () => {
       });
     } catch (err: any) {
       console.error('Registration error:', err);
-      if (!err.response) {
-        setError('Cannot connect to backend server. Please verify the FastAPI backend is running on port 8000.');
-      } else if (err.response.data?.detail) {
-        setError(err.response.data.detail);
+      const detail = err.response?.data?.detail;
+      if (typeof detail === 'string') {
+        setError(detail);
+      } else if (Array.isArray(detail) && detail.length > 0 && detail[0].msg) {
+        setError(detail[0].msg);
+      } else if (err.message && err.message !== 'Network Error') {
+        setError(err.message);
       } else {
-        setError('Registration failed. Please try again.');
+        setError('Registration could not be completed. Please check your credentials or try signing in.');
       }
     } finally {
       setLoading(false);

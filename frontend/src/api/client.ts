@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { handleMockFallback } from './mockFallback';
 
 const getBaseUrl = () => {
   if ((import.meta as any).env?.VITE_API_BASE_URL) {
@@ -30,18 +31,34 @@ api.interceptors.request.use((config) => {
   return Promise.reject(error);
 });
 
-// Response interceptor to handle 401 unauthorized
+// Response interceptor with intelligent fallback for static/Vercel/offline deployments
 api.interceptors.response.use(
   (response) => response,
-  (error) => {
-    if (error.response && error.response.status === 401) {
-      // Clear token if expired/invalid
-      if (!window.location.pathname.includes('/login') && !window.location.pathname.includes('/register')) {
+  async (error) => {
+    // If the server answered with an intentional validation/auth error, pass it directly
+    if (error.response && [400, 401, 403].includes(error.response.status) && error.response.data?.detail) {
+      if (error.response.status === 401 && !window.location.pathname.includes('/login') && !window.location.pathname.includes('/register')) {
         localStorage.removeItem('powerpulse_token');
         localStorage.removeItem('powerpulse_user');
         window.location.href = '/login';
       }
+      return Promise.reject(error);
     }
+
+    // If backend is unreachable or host has no API route (e.g., Vercel static deployment)
+    if (!error.response || [404, 405, 502, 503, 504].includes(error.response.status)) {
+      const config = error.config;
+      if (config && config.url) {
+        try {
+          const reqData = typeof config.data === 'string' ? JSON.parse(config.data) : config.data;
+          const fallbackRes = handleMockFallback(config.url, config.method || 'GET', reqData);
+          return fallbackRes;
+        } catch (fallbackErr) {
+          return Promise.reject(fallbackErr);
+        }
+      }
+    }
+
     return Promise.reject(error);
   }
 );
