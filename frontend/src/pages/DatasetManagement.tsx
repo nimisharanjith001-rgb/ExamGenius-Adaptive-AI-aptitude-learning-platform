@@ -15,12 +15,14 @@ import {
 import api from '../api/client';
 import { useDataset } from '../contexts/DatasetContext';
 import { ValidationReport, Dataset } from '../types';
+import { parseSmartMeterCsv, ParsedCsvResult } from '../utils/csvParser';
 
 export const DatasetManagement: React.FC = () => {
   const { datasets, activeDataset, refreshDatasets, selectDataset, seedDemo, isLoading } = useDataset();
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [customName, setCustomName] = useState<string>('');
   const [validationReport, setValidationReport] = useState<ValidationReport | null>(null);
+  const [latestParsed, setLatestParsed] = useState<ParsedCsvResult | null>(null);
   const [validating, setValidating] = useState<boolean>(false);
   const [importing, setImporting] = useState<boolean>(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -33,11 +35,24 @@ export const DatasetManagement: React.FC = () => {
     const file = e.target.files[0];
     setSelectedFile(file);
     setValidationReport(null);
+    setLatestParsed(null);
     setErrorMessage(null);
     setSuccessMessage(null);
 
-    // Run validation immediately
+    // Run client parsing immediately for instant accurate metrics
     setValidating(true);
+    let clientParsed: ParsedCsvResult | null = null;
+    try {
+      clientParsed = await parseSmartMeterCsv(file);
+      setLatestParsed(clientParsed);
+      setValidationReport(clientParsed as any);
+      try {
+        localStorage.setItem('powerpulse_latest_validated_report', JSON.stringify(clientParsed));
+      } catch {}
+    } catch (parseErr: any) {
+      console.warn('Client CSV preview warning:', parseErr);
+    }
+
     const formData = new FormData();
     formData.append('file', file);
 
@@ -47,29 +62,14 @@ export const DatasetManagement: React.FC = () => {
       });
       if (res.data && typeof res.data === 'object' && !Array.isArray(res.data)) {
         setValidationReport(res.data);
-      } else if (Array.isArray(res.data) && res.data.length > 0) {
-        const first = res.data[0];
-        setValidationReport({
-          total_records: first.total_records ?? 20160,
-          valid_records: first.total_records ?? 20160,
-          missing_records: first.missing_records ?? 0,
-          duplicate_records: first.duplicate_records ?? 0,
-          start_date: first.start_date || new Date().toISOString(),
-          end_date: first.end_date || new Date().toISOString(),
-          total_energy_kwh: first.total_energy_kwh ?? 370.38,
-          avg_power_kw: first.avg_power_kw ?? 1.102,
-          max_power_kw: first.max_power_kw ?? 7.6,
-          min_power_kw: first.min_power_kw ?? 0.076,
-          sampling_rate: '1-minute',
-          detected_format: first.dataset_type || 'CSV Ingestion Pipeline',
-          columns_detected: ['Date', 'Time', 'Power_kW'],
-          data_quality_status: first.data_quality_status || 'EXCELLENT',
-          preview_rows: [],
-          validation_messages: ['Dataset structure validated successfully.']
-        });
+        try {
+          localStorage.setItem('powerpulse_latest_validated_report', JSON.stringify(res.data));
+        } catch {}
       }
     } catch (err: any) {
-      setErrorMessage(err.response?.data?.detail || 'CSV validation inspection failed. Please check the file structure.');
+      if (!clientParsed) {
+        setErrorMessage(err.response?.data?.detail || 'CSV validation inspection failed. Please check the file structure.');
+      }
     } finally {
       setValidating(false);
     }
@@ -90,10 +90,22 @@ export const DatasetManagement: React.FC = () => {
       const res = await api.post('/datasets/upload', formData, {
         headers: { 'Content-Type': 'multipart/form-data' },
       });
+
+      if (latestParsed && res.data?.id) {
+        try {
+          localStorage.setItem(`powerpulse_ds_${res.data.id}_analytics`, JSON.stringify(latestParsed));
+        } catch {}
+      }
+
       setSuccessMessage(`Dataset "${res.data.name}" successfully imported and set as active!`);
       setSelectedFile(null);
       setValidationReport(null);
+      setLatestParsed(null);
       setCustomName('');
+
+      if (res.data?.id) {
+        await selectDataset(res.data.id);
+      }
       await refreshDatasets();
     } catch (err: any) {
       setErrorMessage(err.response?.data?.detail || 'Failed to import dataset.');
