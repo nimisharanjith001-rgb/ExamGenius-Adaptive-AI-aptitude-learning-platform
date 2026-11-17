@@ -461,20 +461,113 @@ export const handleMockFallback = (url: string, method: string = 'GET', data?: a
   }
 
   if (cleanUrl.startsWith('/analytics/appliances')) {
+    const mockAppList = [
+      {
+        id: 'ac',
+        rank: 1,
+        name: 'Air Conditioner / HVAC',
+        category: 'Climate',
+        icon: 'Wind',
+        total_kwh: 142.6,
+        percentage: 38.5,
+        monthly_kwh: 142.6,
+        monthly_cost: 1069.50,
+        currency: '₹',
+        avg_watts: 1800,
+        daily_hours: 6,
+        badge: 'Top Consumer',
+        saving_tip: 'Set thermostat to 24°C to save up to 15%'
+      },
+      {
+        id: 'fridge',
+        rank: 2,
+        name: 'Refrigerator (Base Load)',
+        category: 'Kitchen',
+        icon: 'Box',
+        total_kwh: 48.0,
+        percentage: 13.0,
+        monthly_kwh: 48.0,
+        monthly_cost: 360.00,
+        currency: '₹',
+        avg_watts: 200,
+        daily_hours: 24,
+        badge: 'Continuous',
+        saving_tip: 'Keep door seals clean and avoid overfilling'
+      },
+      {
+        id: 'lighting',
+        rank: 3,
+        name: 'Base Lighting & Electronics',
+        category: 'Base',
+        icon: 'Lightbulb',
+        total_kwh: 97.28,
+        percentage: 26.2,
+        monthly_kwh: 97.28,
+        monthly_cost: 729.60,
+        currency: '₹',
+        avg_watts: 450,
+        daily_hours: 12,
+        badge: 'Standard',
+        saving_tip: 'Switch to 9W smart LED bulbs'
+      },
+      {
+        id: 'oven',
+        rank: 4,
+        name: 'Electric Oven / Microwave',
+        category: 'Kitchen',
+        icon: 'Flame',
+        total_kwh: 30.4,
+        percentage: 8.2,
+        monthly_kwh: 30.4,
+        monthly_cost: 228.00,
+        currency: '₹',
+        avg_watts: 1200,
+        daily_hours: 1.5,
+        badge: 'Cooking',
+        saving_tip: 'Use microwave rather than conventional oven when possible'
+      },
+      {
+        id: 'washing',
+        rank: 5,
+        name: 'Washing Machine',
+        category: 'Laundry',
+        icon: 'Shirt',
+        total_kwh: 28.1,
+        percentage: 7.6,
+        monthly_kwh: 28.1,
+        monthly_cost: 210.75,
+        currency: '₹',
+        avg_watts: 800,
+        daily_hours: 1,
+        badge: 'Periodic',
+        saving_tip: 'Wash with cold water and run full loads'
+      },
+      {
+        id: 'geyser',
+        rank: 6,
+        name: 'Water Geyser / Heater',
+        category: 'Climate',
+        icon: 'Utensils',
+        total_kwh: 24.0,
+        percentage: 6.5,
+        monthly_kwh: 24.0,
+        monthly_cost: 180.00,
+        currency: '₹',
+        avg_watts: 2000,
+        daily_hours: 1,
+        badge: 'High Power',
+        saving_tip: 'Install a 15-minute auto cutoff timer'
+      }
+    ];
+
     return {
       status: 200,
       data: {
-        appliances: [
-          { name: 'Air Conditioner / HVAC', category: 'Climate', estimated_kwh: 142.6, percentage: 38.5, icon: 'Wind' },
-          { name: 'Refrigerator (Base Load)', category: 'Kitchen', estimated_kwh: 48.0, percentage: 13.0, icon: 'Refrigerator' },
-          { name: 'Electric Oven / Microwave', category: 'Kitchen', estimated_kwh: 30.4, percentage: 8.2, icon: 'Flame' },
-          { name: 'Washing Machine', category: 'Laundry', estimated_kwh: 28.1, percentage: 7.6, icon: 'Shirt' },
-          { name: 'Water Geyser / Heater', category: 'Climate', estimated_kwh: 24.0, percentage: 6.5, icon: 'Droplets' },
-          { name: 'Base Lighting & Electronics', category: 'Base', estimated_kwh: 97.28, percentage: 26.2, icon: 'Tv' }
-        ],
-        top_appliance: 'Air Conditioner / HVAC',
+        appliances: mockAppList,
+        top_appliance: mockAppList[0],
         total_kwh: 370.38,
-        currency: '₹'
+        currency: '₹',
+        total_monthly_bill_est: 2777.85
       }
     };
   }

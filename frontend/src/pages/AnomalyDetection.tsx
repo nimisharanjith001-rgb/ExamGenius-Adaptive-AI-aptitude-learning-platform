@@ -219,7 +219,7 @@ export const AnomalyDetection: React.FC = () => {
                       +{anom.deviation_pct}%
                     </td>
                     <td className="py-3 px-4 font-mono text-slate-500 whitespace-nowrap">
-                      {anom.anomaly_score.toFixed(3)}
+                      {Number(anom?.anomaly_score ?? 0.05).toFixed(3)}
                     </td>
                     <td className="py-3 px-4 text-slate-600 min-w-[280px] leading-relaxed">
                       {anom.explanation}

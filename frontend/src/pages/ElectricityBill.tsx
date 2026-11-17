@@ -253,28 +253,28 @@ export const ElectricityBill: React.FC = () => {
               <div className="flex justify-between text-slate-300">
                 <span>Energy Charge ({billResult?.tariff_per_kwh} / kWh):</span>
                 <span className="font-mono font-semibold text-white">
-                  {currency} {billResult?.energy_charge.toFixed(2)}
+                  {currency} {Number(billResult?.energy_charge ?? 0).toFixed(2)}
                 </span>
               </div>
 
               <div className="flex justify-between text-slate-300">
                 <span>Fixed Monthly Charges:</span>
                 <span className="font-mono font-semibold text-white">
-                  {currency} {billResult?.fixed_charge.toFixed(2)}
+                  {currency} {Number(billResult?.fixed_charge ?? 0).toFixed(2)}
                 </span>
               </div>
 
               <div className="flex justify-between text-slate-300">
                 <span>Additional / Regulatory Fees:</span>
                 <span className="font-mono font-semibold text-white">
-                  {currency} {billResult?.additional_charges.toFixed(2)}
+                  {currency} {Number(billResult?.additional_charges ?? 0).toFixed(2)}
                 </span>
               </div>
 
               <div className="flex justify-between text-slate-300">
                 <span>Taxes & Duties ({taxRate}%):</span>
                 <span className="font-mono font-semibold text-white">
-                  {currency} {billResult?.tax_amount.toFixed(2)}
+                  {currency} {Number(billResult?.tax_amount ?? 0).toFixed(2)}
                 </span>
               </div>
             </div>

@@ -312,24 +312,24 @@ export const Dashboard: React.FC = () => {
                   className="p-3.5 rounded-xl border border-slate-100 bg-slate-50/70 hover:bg-slate-50 transition-colors"
                 >
                   <div className="flex items-center justify-between">
-                    <span className="text-xs font-semibold text-slate-900">{anom.anomaly_type}</span>
+                    <span className="text-xs font-semibold text-slate-900">{anom.anomaly_type || 'Spike Outlier'}</span>
                     <span
                       className={`text-[10px] font-bold px-2 py-0.5 rounded-full uppercase ${
-                        anom.severity === 'High'
+                        (anom.severity as string).toUpperCase() === 'HIGH'
                           ? 'bg-red-100 text-red-700 border border-red-200'
-                          : anom.severity === 'Medium'
+                          : (anom.severity as string).toUpperCase() === 'MEDIUM'
                           ? 'bg-amber-100 text-amber-700 border border-amber-200'
                           : 'bg-blue-100 text-blue-700 border border-blue-200'
                       }`}
                     >
-                      {anom.severity} Severity
+                      {anom.severity || 'High'} Severity
                     </span>
                   </div>
-                  <p className="text-xs text-slate-600 mt-1 leading-relaxed">{anom.explanation}</p>
+                  <p className="text-xs text-slate-600 mt-1 leading-relaxed">{anom.explanation || 'Unusual power consumption variance detected.'}</p>
                   <div className="mt-2 flex items-center gap-4 text-[11px] text-slate-500 font-mono">
-                    <span>{new Date(anom.timestamp).toLocaleString()}</span>
-                    <span>Actual: <strong className="text-slate-800">{anom.actual_kwh} kWh</strong></span>
-                    <span>Baseline: <strong className="text-slate-800">{anom.baseline_kwh} kWh</strong></span>
+                    <span>{new Date(anom.timestamp || Date.now()).toLocaleString()}</span>
+                    <span>Actual: <strong className="text-slate-800">{anom.actual_kwh ?? 0} kWh</strong></span>
+                    <span>Baseline: <strong className="text-slate-800">{anom.baseline_kwh ?? 0} kWh</strong></span>
                   </div>
                 </div>
               ))

@@ -123,7 +123,7 @@ export const Recommendations: React.FC = () => {
                 <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between text-xs">
                   <span className="text-slate-500 font-medium">Estimated Monthly Impact:</span>
                   <span className="font-bold text-emerald-700 font-mono">
-                    Save ~{rec.estimated_saving_kwh} kWh ({data.currency} {rec.estimated_saving_amount.toFixed(2)}) / month
+                    Save ~{rec.estimated_saving_kwh} kWh ({data.currency} {Number(rec?.estimated_saving_amount ?? 0).toFixed(2)}) / month
                   </span>
                 </div>
               )}

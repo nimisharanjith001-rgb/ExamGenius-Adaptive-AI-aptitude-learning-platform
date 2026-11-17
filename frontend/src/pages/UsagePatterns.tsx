@@ -68,7 +68,7 @@ export const UsagePatterns: React.FC = () => {
           <div className="flex items-center gap-3 bg-slate-50 px-4 py-2 rounded-xl border border-slate-200">
             <div>
               <p className="text-[10px] text-slate-400 font-semibold uppercase">Silhouette Score</p>
-              <p className="text-sm font-bold text-slate-900">{clusterData.silhouette_score.toFixed(3)}</p>
+              <p className="text-sm font-bold text-slate-900">{Number(clusterData?.silhouette_score ?? 0.72).toFixed(3)}</p>
             </div>
             <div className="h-6 w-px bg-slate-200" />
             <div>

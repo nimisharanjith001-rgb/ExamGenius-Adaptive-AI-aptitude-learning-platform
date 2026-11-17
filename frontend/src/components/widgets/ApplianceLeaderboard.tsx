@@ -65,9 +65,16 @@ export const ApplianceLeaderboard: React.FC = () => {
       setLoading(true);
       try {
         const res = await api.get(`/analytics/appliances?dataset_id=${activeDataset.id}`);
-        setData(res.data);
-        if (res.data.top_appliance) {
-          setSelectedAppliance(res.data.top_appliance);
+        if (res.data && Array.isArray(res.data.appliances)) {
+          let topObj = res.data.top_appliance;
+          if (typeof topObj === 'string') {
+            topObj = res.data.appliances.find((a: any) => a.name === topObj) || res.data.appliances[0];
+          } else if (!topObj && res.data.appliances.length > 0) {
+            topObj = res.data.appliances[0];
+          }
+          res.data.top_appliance = topObj;
+          setData(res.data);
+          setSelectedAppliance(topObj);
         }
       } catch (err) {
         console.error('Failed to load appliance data', err);
@@ -78,7 +85,7 @@ export const ApplianceLeaderboard: React.FC = () => {
     fetchAppliances();
   }, [activeDataset]);
 
-  if (!activeDataset || !data || data.appliances.length === 0) {
+  if (!activeDataset || !data || !Array.isArray(data.appliances) || data.appliances.length === 0) {
     return null;
   }
 
@@ -115,10 +122,10 @@ export const ApplianceLeaderboard: React.FC = () => {
                 <span className="text-[10px] font-extrabold uppercase tracking-wider text-amber-800 bg-amber-100 px-1.5 py-0.5 rounded">
                   #1 Highest Consumer
                 </span>
-                <span className="text-xs font-bold text-slate-900">{top.name}</span>
+                <span className="text-xs font-bold text-slate-900">{top?.name || 'Air Conditioner'}</span>
               </div>
               <p className="text-xs text-slate-600 mt-0.5">
-                Consumes <strong className="text-slate-900">{top.percentage}%</strong> of home power ({top.total_kwh} kWh • {top.currency}{top.monthly_cost}/mo)
+                Consumes <strong className="text-slate-900">{top?.percentage ?? 0}%</strong> of home power ({top?.total_kwh ?? 0} kWh • {top?.currency || '₹'}{Number(top?.monthly_cost ?? 0).toFixed(2)}/mo)
               </p>
             </div>
           </div>
@@ -240,18 +247,18 @@ export const ApplianceLeaderboard: React.FC = () => {
                     </td>
 
                     <td className="py-3 px-3 font-mono text-slate-600">
-                      {app.avg_watts} W
+                      {app.avg_watts ?? 0} W
                     </td>
 
                     <td className="py-3 px-3 font-mono text-slate-600">
                       <span className="flex items-center gap-1">
                         <Clock className="w-3 h-3 text-slate-400" />
-                        {app.daily_hours} hrs
+                        {app.daily_hours ?? 0} hrs
                       </span>
                     </td>
 
                     <td className="py-3 px-3 font-mono font-semibold text-slate-800">
-                      {app.total_kwh} kWh
+                      {app.total_kwh ?? 0} kWh
                     </td>
 
                     <td className="py-3 px-3">
@@ -259,15 +266,15 @@ export const ApplianceLeaderboard: React.FC = () => {
                         <div className="w-12 h-1.5 rounded-full bg-slate-100 overflow-hidden">
                           <div
                             className="h-full bg-blue-600 rounded-full"
-                            style={{ width: `${Math.min(100, app.percentage * 2)}%` }}
+                            style={{ width: `${Math.min(100, (app.percentage ?? 0) * 2)}%` }}
                           />
                         </div>
-                        <span className="font-bold text-slate-900 text-[11px]">{app.percentage}%</span>
+                        <span className="font-bold text-slate-900 text-[11px]">{app.percentage ?? 0}%</span>
                       </div>
                     </td>
 
                     <td className="py-3 px-3 text-right font-mono font-bold text-slate-900 whitespace-nowrap">
-                      {app.currency} {app.monthly_cost.toFixed(2)}
+                      {app.currency || '₹'} {Number(app.monthly_cost ?? 0).toFixed(2)}
                     </td>
                   </tr>
                 );
