@@ -273,6 +273,13 @@ class AuthService:
         email_clean = login_data.email.strip().lower()
         pwd = login_data.password
 
+        # Enforce strict password complexity (words/letters, numbers, special symbols, min 8 chars)
+        if len(pwd) < 8 or not re.search(r"[a-zA-Z]", pwd) or not re.search(r"\d", pwd) or not re.search(SPECIAL_CHARS_REGEX, pwd):
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Weak password rejected: Password must contain at least 8 characters, including words (letters), numbers, and special symbols (!@#$%^&*)."
+            )
+
         user = db.query(User).filter(User.email == email_clean).first()
         if not user or not verify_password(pwd, user.hashed_password):
             raise HTTPException(

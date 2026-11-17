@@ -20,7 +20,23 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   useEffect(() => {
     const initializeAuth = async () => {
-      const storedToken = localStorage.getItem('powerpulse_token');
+      let storedToken = localStorage.getItem('powerpulse_token');
+
+      // Auto-authenticate if demo query parameter is present
+      if (!storedToken && window.location.search.includes('demo=1')) {
+        try {
+          const res = await api.post('/auth/login', {
+            email: 'demo@powerpulse.ai',
+            password: 'DemoPassword123!',
+          });
+          login(res.data.access_token, res.data.user);
+          setIsLoading(false);
+          return;
+        } catch (e) {
+          console.error('Demo auto-auth failed:', e);
+        }
+      }
+
       if (storedToken) {
         try {
           const res = await api.get('/auth/me');

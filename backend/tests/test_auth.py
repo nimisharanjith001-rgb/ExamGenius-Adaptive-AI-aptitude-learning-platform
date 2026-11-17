@@ -40,7 +40,23 @@ def test_register_and_login(client):
 def test_login_invalid_credentials(client):
     res = client.post("/api/auth/login", json={
         "email": "nonexistent@powerpulse.ai",
-        "password": "wrongpassword"
+        "password": "WrongPassword123!"
     })
     assert res.status_code == 401
+
+def test_login_weak_password_rejected(client):
+    # Weak passwords such as '123' must be rejected with 400 or 422
+    res = client.post("/api/auth/login", json={
+        "email": "demo@powerpulse.ai",
+        "password": "123"
+    })
+    assert res.status_code in [400, 422]
+    
+    # Missing symbol rejected
+    res2 = client.post("/api/auth/login", json={
+        "email": "demo@powerpulse.ai",
+        "password": "Password12345"
+    })
+    assert res2.status_code == 400
+    assert "Weak password rejected" in res2.json()["detail"]
 
