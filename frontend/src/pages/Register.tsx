@@ -108,7 +108,13 @@ export const Register: React.FC = () => {
       });
     } catch (err: any) {
       console.error('Registration error:', err);
-      setError(err.response?.data?.detail || err.message || 'Registration failed. Email may already be registered.');
+      if (!err.response) {
+        setError('Cannot connect to backend server. Please verify the FastAPI backend is running on port 8000.');
+      } else if (err.response.data?.detail) {
+        setError(err.response.data.detail);
+      } else {
+        setError('Registration failed. Please try again.');
+      }
     } finally {
       setLoading(false);
     }

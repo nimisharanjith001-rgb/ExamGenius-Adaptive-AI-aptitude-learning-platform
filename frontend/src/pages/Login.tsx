@@ -88,7 +88,13 @@ export const Login: React.FC = () => {
       navigate('/dashboard');
     } catch (err: any) {
       console.error('Login error:', err);
-      setError(err.response?.data?.detail || err.message || 'Authentication request failed. Please check credentials.');
+      if (!err.response) {
+        setError('Cannot connect to backend server. Please verify the FastAPI backend is running on port 8000.');
+      } else if (err.response.data?.detail) {
+        setError(err.response.data.detail);
+      } else {
+        setError('Authentication request failed. Please check your credentials.');
+      }
     } finally {
       setLoading(false);
     }

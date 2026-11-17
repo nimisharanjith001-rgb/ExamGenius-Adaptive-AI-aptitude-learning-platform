@@ -163,22 +163,26 @@ class AuthService:
         db.refresh(new_user)
 
         # Initialize Default user-specific tariff and settings (Isolated per user)
-        default_tariff = ElectricityTariff(
-            user_id=new_user.id,
-            currency="₹",
-            tariff_per_kwh=7.50,
-            fixed_monthly_charge=120.00,
-            tax_rate_pct=5.0
-        )
-        db.add(default_tariff)
+        existing_tariff = db.query(ElectricityTariff).filter(ElectricityTariff.user_id == new_user.id).first()
+        if not existing_tariff:
+            default_tariff = ElectricityTariff(
+                user_id=new_user.id,
+                currency="₹",
+                tariff_per_kwh=7.50,
+                fixed_monthly_charge=120.00,
+                tax_rate_pct=5.0
+            )
+            db.add(default_tariff)
 
-        default_settings = UserSettings(
-            user_id=new_user.id,
-            default_currency="₹",
-            default_tariff=7.50,
-            theme="light"
-        )
-        db.add(default_settings)
+        existing_settings = db.query(UserSettings).filter(UserSettings.user_id == new_user.id).first()
+        if not existing_settings:
+            default_settings = UserSettings(
+                user_id=new_user.id,
+                default_currency="₹",
+                default_tariff=7.50,
+                theme="light"
+            )
+            db.add(default_settings)
         db.commit()
 
         # Generate access token

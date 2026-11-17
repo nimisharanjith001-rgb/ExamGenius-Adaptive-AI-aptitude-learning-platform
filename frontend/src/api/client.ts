@@ -1,7 +1,19 @@
 import axios from 'axios';
 
+const getBaseUrl = () => {
+  if ((import.meta as any).env?.VITE_API_BASE_URL) {
+    return (import.meta as any).env.VITE_API_BASE_URL;
+  }
+  // In the browser, relative '/api' leverages Vite's proxy automatically
+  // across all devices on the network (Windows PC, Mac, Mobile, LAN IP)
+  if (typeof window !== 'undefined') {
+    return '/api';
+  }
+  return 'http://127.0.0.1:8000/api';
+};
+
 const api = axios.create({
-  baseURL: (import.meta as any).env?.VITE_API_BASE_URL || 'http://localhost:8000/api',
+  baseURL: getBaseUrl(),
   headers: {
     'Content-Type': 'application/json',
   },

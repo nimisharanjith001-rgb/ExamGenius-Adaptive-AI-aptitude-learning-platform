@@ -25,10 +25,10 @@ app = FastAPI(
     lifespan=lifespan
 )
 
-# CORS setup
+# CORS setup - support all origins (localhost, 127.0.0.1, LAN IPs, ports 5173/5174/3000)
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=settings.BACKEND_CORS_ORIGINS + ["*"],
+    allow_origin_regex=r"https?://.*",
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
