@@ -114,7 +114,7 @@ export const UsagePatterns: React.FC = () => {
 
             <div className="mt-4 pt-3 border-t border-slate-100 flex items-center gap-1.5 text-xs text-slate-500">
               <Clock className="w-3.5 h-3.5 text-slate-400" />
-              <span>Typical Hours: <strong>{c.typical_hours.map(h => `${h}:00`).slice(0, 3).join(', ')}</strong></span>
+              <span>Typical Hours: <strong>{(c.typical_hours || []).map(h => `${h}:00`).slice(0, 3).join(', ')}</strong></span>
             </div>
           </div>
         ))}
@@ -134,9 +134,9 @@ export const UsagePatterns: React.FC = () => {
         </div>
 
         <div className="h-80 mt-6 w-full">
-          {clusterData && clusterData.hourly_cluster_matrix.length > 0 ? (
+          {clusterData && (clusterData.hourly_cluster_matrix?.length ?? 0) > 0 ? (
             <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={clusterData.hourly_cluster_matrix}>
+              <BarChart data={clusterData.hourly_cluster_matrix || []}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#F1F5F9" />
                 <XAxis dataKey="hour" tick={{ fontSize: 10, fill: '#64748B' }} tickFormatter={(h) => `${h}h`} />
                 <YAxis tick={{ fontSize: 10, fill: '#64748B' }} />
@@ -144,7 +144,7 @@ export const UsagePatterns: React.FC = () => {
                   contentStyle={{ backgroundColor: '#101B2D', color: '#fff', borderRadius: '8px', fontSize: '12px', border: 'none' }}
                 />
                 <Legend />
-                {clusterData.clusters.map((c, i) => (
+                {(clusterData.clusters || []).map((c, i) => (
                   <Bar
                     key={c.cluster_id}
                     dataKey={`cluster_${c.cluster_id}`}

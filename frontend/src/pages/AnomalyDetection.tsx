@@ -44,13 +44,14 @@ export const AnomalyDetection: React.FC = () => {
     return <EmptyState />;
   }
 
-  const filteredAnomalies = anomalyData?.anomalies.filter((item) => {
-    const matchesSeverity = selectedSeverity === 'all' || item.severity.toLowerCase() === selectedSeverity.toLowerCase();
-    const matchesSearch = item.explanation.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                          item.anomaly_type.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                          item.timestamp.includes(searchQuery);
+  const filteredAnomalies = (anomalyData?.anomalies || []).filter((item) => {
+    const itemSev = String(item.severity || 'Medium').toLowerCase();
+    const matchesSeverity = selectedSeverity === 'all' || itemSev === selectedSeverity.toLowerCase();
+    const matchesSearch = (item.explanation || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+                          (item.anomaly_type || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+                          (item.timestamp || '').includes(searchQuery);
     return matchesSeverity && matchesSearch;
-  }) || [];
+  });
 
   return (
     <div className="space-y-6">
@@ -202,14 +203,14 @@ export const AnomalyDetection: React.FC = () => {
                     <td className="py-3 px-4 whitespace-nowrap">
                       <span
                         className={`inline-block text-[10px] font-bold px-2 py-0.5 rounded-full uppercase ${
-                          anom.severity === 'High'
+                          String(anom.severity || 'High').toLowerCase() === 'high'
                             ? 'bg-red-100 text-red-700 border border-red-200'
-                            : anom.severity === 'Medium'
+                            : String(anom.severity || 'Medium').toLowerCase() === 'medium'
                             ? 'bg-amber-100 text-amber-700 border border-amber-200'
                             : 'bg-blue-100 text-blue-700 border border-blue-200'
                         }`}
                       >
-                        {anom.severity}
+                        {anom.severity || 'High'}
                       </span>
                     </td>
                     <td className="py-3 px-4 font-mono whitespace-nowrap">

@@ -168,18 +168,18 @@ export const Forecasting: React.FC = () => {
               Future Electricity Consumption Projections
             </h2>
             <p className="text-xs text-slate-500">
-              Generated {forecastData?.forecasts.length || 0} sequential hourly forecasts ({Number(forecastData?.total_predicted_kwh ?? 28.5).toFixed(1)} total kWh)
+              Generated {forecastData?.forecasts?.length || 0} sequential hourly forecasts ({Number(forecastData?.total_predicted_kwh ?? 28.5).toFixed(1)} total kWh)
             </p>
           </div>
           <span className="text-xs font-semibold px-2.5 py-1 bg-purple-50 text-purple-700 rounded-lg border border-purple-100">
-            Total Projected Energy: {forecastData?.total_predicted_kwh || 0} kWh
+            Total Projected Energy: {Number(forecastData?.total_predicted_kwh ?? 0).toFixed(1)} kWh
           </span>
         </div>
 
         <div className="h-80 mt-6 w-full">
-          {forecastData && forecastData.forecasts.length > 0 ? (
+          {forecastData && (forecastData.forecasts?.length ?? 0) > 0 ? (
             <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={forecastData.forecasts}>
+              <LineChart data={forecastData?.forecasts || []}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#F1F5F9" />
                 <XAxis
                   dataKey="timestamp"

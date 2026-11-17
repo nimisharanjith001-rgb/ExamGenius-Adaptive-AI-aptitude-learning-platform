@@ -273,9 +273,9 @@ export const Dashboard: React.FC = () => {
             <div className="mt-2 pt-3 border-t border-slate-100 flex items-center justify-between text-xs text-slate-600">
               <span className="flex items-center gap-1 font-semibold text-amber-700">
                 <Clock className="w-3.5 h-3.5" />
-                Peak Window: {peakAnalysis.peak_hours.join(', ')}:00
+                Peak Window: {(peakAnalysis.peak_hours || []).map(h => String(h).includes(':') ? h : `${h}:00`).join(', ')}
               </span>
-              <span className="font-bold text-slate-900">{peakAnalysis.peak_percentage}% of load</span>
+              <span className="font-bold text-slate-900">{peakAnalysis.peak_percentage ?? 0}% of load</span>
             </div>
           )}
         </div>
@@ -315,9 +315,9 @@ export const Dashboard: React.FC = () => {
                     <span className="text-xs font-semibold text-slate-900">{anom.anomaly_type || 'Spike Outlier'}</span>
                     <span
                       className={`text-[10px] font-bold px-2 py-0.5 rounded-full uppercase ${
-                        (anom.severity as string).toUpperCase() === 'HIGH'
+                        String(anom.severity || 'HIGH').toUpperCase() === 'HIGH'
                           ? 'bg-red-100 text-red-700 border border-red-200'
-                          : (anom.severity as string).toUpperCase() === 'MEDIUM'
+                          : String(anom.severity || 'MEDIUM').toUpperCase() === 'MEDIUM'
                           ? 'bg-amber-100 text-amber-700 border border-amber-200'
                           : 'bg-blue-100 text-blue-700 border border-blue-200'
                       }`}

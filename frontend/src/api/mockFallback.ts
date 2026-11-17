@@ -429,15 +429,28 @@ export const handleMockFallback = (url: string, method: string = 'GET', data?: a
 
   // 9. PEAK HOURS
   if (cleanUrl.startsWith('/dashboard/peak-hours')) {
+    const hourly = [];
+    for (let h = 0; h < 24; h++) {
+      const isPeak = h >= 18 && h <= 22;
+      const base = isPeak ? 2.38 : h >= 6 && h <= 9 ? 1.65 : h >= 0 && h <= 5 ? 0.45 : 1.10;
+      hourly.push({
+        hour: h,
+        avg_kwh: +(base + Math.sin(h) * 0.15).toFixed(2),
+        max_kwh: +(base * 1.5).toFixed(2),
+        min_kwh: +(base * 0.6).toFixed(2),
+        is_peak: isPeak
+      });
+    }
+
     return {
       status: 200,
       data: {
-        peak_hours: ['18:00', '19:00', '20:00', '21:00', '22:00'],
-        off_peak_hours: ['00:00', '01:00', '02:00', '03:00', '04:00', '05:00'],
+        peak_hours: [18, 19, 20, 21, 22],
+        off_peak_hours: [0, 1, 2, 3, 4, 5],
         peak_avg_kwh: 2.38,
         off_peak_avg_kwh: 0.64,
         peak_percentage: 50.2,
-        hourly_breakdown: []
+        hourly_breakdown: hourly
       }
     };
   }
@@ -574,75 +587,184 @@ export const handleMockFallback = (url: string, method: string = 'GET', data?: a
 
   // 11. MACHINE LEARNING
   if (cleanUrl.startsWith('/ml/anomaly-detection')) {
+    const mockAnomalies = [
+      {
+        id: 1,
+        timestamp: new Date().toISOString(),
+        actual_kwh: 6.84,
+        baseline_kwh: 1.45,
+        deviation_pct: 371.7,
+        anomaly_score: 0.082,
+        severity: 'High' as const,
+        anomaly_type: 'Power Surge Spike',
+        explanation: 'Extreme power surge detected during off-peak period (4.7x baseline expectation).'
+      },
+      {
+        id: 2,
+        timestamp: new Date(Date.now() - 3600 * 1000 * 4).toISOString(),
+        actual_kwh: 5.12,
+        baseline_kwh: 1.62,
+        deviation_pct: 216.0,
+        anomaly_score: 0.071,
+        severity: 'High' as const,
+        anomaly_type: 'Sustained High Load',
+        explanation: 'Unusual sustained high load detected across sub-metering circuits.'
+      },
+      {
+        id: 3,
+        timestamp: new Date(Date.now() - 3600 * 1000 * 12).toISOString(),
+        actual_kwh: 3.48,
+        baseline_kwh: 1.20,
+        deviation_pct: 190.0,
+        anomaly_score: 0.054,
+        severity: 'Medium' as const,
+        anomaly_type: 'Off-Hours HVAC Run',
+        explanation: 'Unscheduled daytime heating/cooling continuous cycle detected.'
+      },
+      {
+        id: 4,
+        timestamp: new Date(Date.now() - 3600 * 1000 * 20).toISOString(),
+        actual_kwh: 2.10,
+        baseline_kwh: 0.85,
+        deviation_pct: 147.1,
+        anomaly_score: 0.042,
+        severity: 'Medium' as const,
+        anomaly_type: 'Baseline Drift',
+        explanation: 'Moderate deviation above typical nighttime standby basal draw.'
+      },
+      {
+        id: 5,
+        timestamp: new Date(Date.now() - 3600 * 1000 * 36).toISOString(),
+        actual_kwh: 1.65,
+        baseline_kwh: 0.90,
+        deviation_pct: 83.3,
+        anomaly_score: 0.031,
+        severity: 'Low' as const,
+        anomaly_type: 'Minor Fluctuation',
+        explanation: 'Small statistical variance in regular morning power cycling.'
+      }
+    ];
+
     return {
       status: 200,
       data: {
-        total_anomalies: 11,
-        high_severity_count: 2,
-        medium_severity_count: 5,
-        low_severity_count: 4,
-        anomaly_rate_pct: 3.2,
-        anomalies: [
-          {
-            timestamp: new Date().toISOString(),
-            actual_kwh: 6.84,
-            baseline_kwh: 1.45,
-            deviation_pct: 371.7,
-            severity: 'HIGH',
-            explanation: 'Extreme power surge detected during off-peak period (4.7x baseline expectation).'
-          },
-          {
-            timestamp: new Date(Date.now() - 3600 * 1000 * 4).toISOString(),
-            actual_kwh: 5.12,
-            baseline_kwh: 1.62,
-            deviation_pct: 216.0,
-            severity: 'HIGH',
-            explanation: 'Unusual sustained high load detected across sub-metering circuits.'
-          }
-        ],
-        model_info: { model: 'Isolation Forest (100 Estimators)', contamination: 0.03 }
+        total_anomalies: mockAnomalies.length,
+        high_severity_count: mockAnomalies.filter(a => a.severity === 'High').length,
+        medium_severity_count: mockAnomalies.filter(a => a.severity === 'Medium').length,
+        low_severity_count: mockAnomalies.filter(a => a.severity === 'Low').length,
+        anomalies: mockAnomalies,
+        model_info: {
+          algorithm: 'Isolation Forest (100 Estimators)',
+          n_estimators: 100,
+          contamination_parameter: 0.03,
+          total_evaluated_hours: 336,
+          anomalies_detected: mockAnomalies.length,
+          evaluated_at: new Date().toISOString()
+        }
       }
     };
   }
 
   if (cleanUrl.startsWith('/ml/forecast')) {
-    const forecast = [];
+    const forecasts = [];
     const now = new Date();
+    let totalKwh = 0;
     for (let i = 1; i <= 24; i++) {
       const t = new Date(now.getTime() + i * 3600 * 1000);
       const val = +(1.1 + Math.sin(i / 3) * 0.6).toFixed(2);
-      forecast.push({
+      totalKwh += val;
+      forecasts.push({
         timestamp: t.toISOString(),
         predicted_kwh: val,
+        actual_kwh: null,
         lower_bound: +(val * 0.85).toFixed(2),
-        upper_bound: +(val * 1.15).toFixed(2)
+        upper_bound: +(val * 1.15).toFixed(2),
+        is_forecast: true
       });
     }
     return {
       status: 200,
       data: {
         horizon_type: '24h Load Forecasting',
-        model_name: 'Random Forest Regressor',
-        r2_score: 0.902,
-        rmse: 0.28,
-        mae: 0.21,
-        forecast
+        total_predicted_kwh: +(totalKwh).toFixed(1),
+        metrics: {
+          mae: 0.212,
+          rmse: 0.284,
+          r2_score: 0.902,
+          baseline_mae: 0.354,
+          baseline_rmse: 0.441,
+          accuracy_improvement_pct: 18.5,
+          train_size: 268,
+          test_size: 68,
+          features_used: ['hour_sin', 'hour_cos', 'day_of_week', 'lag_1h', 'lag_24h', 'rolling_mean_24h']
+        },
+        forecasts,
+        model_version: 'RandomForestRegressor-v1.4.0',
+        warning_message: null
       }
     };
   }
 
   if (cleanUrl.startsWith('/ml/clustering')) {
+    const clusters = [
+      {
+        cluster_id: 0,
+        cluster_name: 'Night Basal Load',
+        avg_kwh: 0.45,
+        percentage: 26,
+        description: 'Consistent overnight standby baseline load across essential circuits.',
+        typical_hours: [0, 1, 2, 3, 4, 5]
+      },
+      {
+        cluster_id: 1,
+        cluster_name: 'Morning Peak Activity',
+        avg_kwh: 1.85,
+        percentage: 20,
+        description: 'Morning kitchen appliances, water heating, and morning routine surge.',
+        typical_hours: [6, 7, 8, 9]
+      },
+      {
+        cluster_id: 2,
+        cluster_name: 'Daytime Moderate',
+        avg_kwh: 1.12,
+        percentage: 29,
+        description: 'Continuous midday refrigeration, ventilation, and home office appliances.',
+        typical_hours: [10, 11, 12, 13, 14, 15, 16]
+      },
+      {
+        cluster_id: 3,
+        cluster_name: 'Evening Cooking & Lighting',
+        avg_kwh: 2.65,
+        percentage: 18,
+        description: 'High evening family activity, HVAC climate conditioning, and cooking.',
+        typical_hours: [17, 18, 19, 20, 21, 22]
+      },
+      {
+        cluster_id: 4,
+        cluster_name: 'Late Night Wind Down',
+        avg_kwh: 0.72,
+        percentage: 7,
+        description: 'Evening wind-down with minimal active entertainment and ambient lighting.',
+        typical_hours: [23]
+      }
+    ];
+
+    const hourly_cluster_matrix = [];
+    for (let h = 0; h < 24; h++) {
+      const row: any = { hour: h };
+      clusters.forEach((c) => {
+        row[`cluster_${c.cluster_id}`] = c.typical_hours.includes(h) ? +(c.avg_kwh * 1.1).toFixed(2) : 0;
+      });
+      hourly_cluster_matrix.push(row);
+    }
+
     return {
       status: 200,
       data: {
         optimal_k: 5,
-        clusters: [
-          { cluster_id: 0, label: 'Night Basal Load', avg_kwh: 0.45, count: 62 },
-          { cluster_id: 1, label: 'Morning Peak Activity', avg_kwh: 1.85, count: 48 },
-          { cluster_id: 2, label: 'Daytime Moderate', avg_kwh: 1.12, count: 70 },
-          { cluster_id: 3, label: 'Evening Cooking & Lighting', avg_kwh: 2.65, count: 85 },
-          { cluster_id: 4, label: 'High Demand Surge', avg_kwh: 5.40, count: 18 }
-        ]
+        silhouette_score: 0.742,
+        clusters,
+        hourly_cluster_matrix
       }
     };
   }
@@ -659,15 +781,30 @@ export const handleMockFallback = (url: string, method: string = 'GET', data?: a
 
   // 12. BILLING & TARIFF
   if (cleanUrl.startsWith('/bill/calculate')) {
+    const kwh = (data?.custom_kwh && !isNaN(Number(data.custom_kwh))) ? Number(data.custom_kwh) : 370.38;
+    const rate = Number(data?.tariff_per_kwh ?? 7.50);
+    const fixed = Number(data?.fixed_monthly_charge ?? 120.00);
+    const taxRate = Number(data?.tax_rate_pct ?? 5.0);
+    const addCharge = Number(data?.additional_charges ?? 0.0);
+    const energyCharge = +(kwh * rate).toFixed(2);
+    const taxAmt = +(((energyCharge + fixed + addCharge) * taxRate) / 100).toFixed(2);
+    const total = +(energyCharge + fixed + addCharge + taxAmt).toFixed(2);
+    const curr = data?.currency || '₹';
+
     return {
       status: 200,
       data: {
-        energy_charges: 2450.25,
-        fixed_charges: 120.00,
-        tax_amount: 128.51,
-        total_bill: 2698.76,
-        currency: '₹',
-        units_billed: 370.38
+        total_kwh: kwh,
+        currency: curr,
+        tariff_per_kwh: rate,
+        energy_charge: energyCharge,
+        fixed_charge: fixed,
+        tax_amount: taxAmt,
+        additional_charges: addCharge,
+        total_estimated_bill: total,
+        average_cost_per_day: +(total / 30).toFixed(2),
+        effective_rate_per_kwh: +(total / (kwh || 1)).toFixed(2),
+        disclaimer: 'Estimation based on user-provided tariff parameters and monitored historical consumption.'
       }
     };
   }
@@ -679,7 +816,8 @@ export const handleMockFallback = (url: string, method: string = 'GET', data?: a
         currency: '₹',
         tariff_per_kwh: 7.50,
         fixed_monthly_charge: 120.00,
-        tax_rate_pct: 5.0
+        tax_rate_pct: 5.0,
+        additional_charges: 0.0
       }
     };
   }
@@ -695,25 +833,40 @@ export const handleMockFallback = (url: string, method: string = 'GET', data?: a
         currency: '₹',
         items: [
           {
+            id: 1,
             title: 'Shift HVAC Pre-Cooling to Off-Peak Hours',
-            description: 'Run air conditioning 30 minutes earlier before the 18:00 peak slab begins to reduce peak-tier charges.',
+            category: 'HVAC & Climate Control',
+            explanation: 'Running climate conditioning 30 minutes prior to the 18:00 peak slab avoids top-tier energy pricing.',
+            evidence: 'Peak-window consumption averages 2.38 kWh/hr compared to 0.64 kWh/hr off-peak baseline.',
+            practical_action: 'Pre-cool living spaces to 23°C at 17:00, then adjust thermostat to 25°C between 18:00-22:00.',
             estimated_saving_kwh: 24.0,
             estimated_saving_amount: 180.00,
-            priority: 'HIGH'
+            confidence: '94% Confidence',
+            priority: 'High'
           },
           {
-            title: 'High Standby Basal Load Detected',
-            description: 'Standby electronics consume ~97 kWh monthly. Using smart power strips could yield immediate savings.',
+            id: 2,
+            title: 'Mitigate Overnight Standby Basal Load',
+            category: 'Continuous Base Load',
+            explanation: 'Vampire electronics draw ~97 kWh monthly while household is asleep or idle.',
+            evidence: 'Persistent 450W average power draw observed between 01:00 and 05:00 every night.',
+            practical_action: 'Use timer-enabled surge protectors for home entertainment units and desktop setups.',
             estimated_saving_kwh: 15.5,
             estimated_saving_amount: 116.25,
-            priority: 'MEDIUM'
+            confidence: '88% Confidence',
+            priority: 'Medium'
           },
           {
-            title: 'Optimize Laundry Wash Cycles',
-            description: 'Consolidate wash loads to weekends to capitalize on lower tariff slabs.',
+            id: 3,
+            title: 'Consolidate Laundry Wash Cycles to Weekends',
+            category: 'Major Appliances',
+            explanation: 'Clustering washer/dryer usage during lower-tariff weekend bands minimizes bill impact.',
+            evidence: 'Laundry sub-meter spikes on Tuesday and Thursday afternoons coincide with intermediate tariff tiers.',
+            practical_action: 'Run washing machine with cold water and complete full batches on Saturday/Sunday mornings.',
             estimated_saving_kwh: 9.0,
             estimated_saving_amount: 67.50,
-            priority: 'LOW'
+            confidence: '82% Confidence',
+            priority: 'Low'
           }
         ]
       }

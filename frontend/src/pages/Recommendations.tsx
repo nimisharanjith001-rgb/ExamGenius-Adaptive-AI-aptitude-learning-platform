@@ -79,14 +79,14 @@ export const Recommendations: React.FC = () => {
                 <div className="flex items-center gap-2.5">
                   <span
                     className={`text-[10px] font-bold px-2.5 py-0.5 rounded-full uppercase ${
-                      rec.priority === 'High'
+                      String(rec.priority || 'High').toLowerCase() === 'high'
                         ? 'bg-red-100 text-red-700 border border-red-200'
-                        : rec.priority === 'Medium'
+                        : String(rec.priority || 'Medium').toLowerCase() === 'medium'
                         ? 'bg-amber-100 text-amber-700 border border-amber-200'
                         : 'bg-blue-100 text-blue-700 border border-blue-200'
                     }`}
                   >
-                    {rec.priority} Priority
+                    {rec.priority || 'High'} Priority
                   </span>
                   <span className="text-xs font-semibold text-slate-400">•</span>
                   <span className="text-xs font-semibold text-slate-500">{rec.category}</span>
